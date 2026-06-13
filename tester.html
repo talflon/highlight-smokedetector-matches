@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Testing highlight-smokedetector-matches</title>
+    <style>
+      pre {
+        display: block;
+        padding: 9.5px;
+        margin: 0 0 10px;
+        font-size: 13px;
+        line-height: 1.42857143;
+        color: #333;
+        word-break: break-all;
+        word-wrap: break-word;
+        background-color: #f5f5f5;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+    </style>
+    <script type="module" defer>
+      import { fetchPost } from "./dist/highlight-smokedetector-matches.js";
+      async function loadPost() {
+        let post = await fetchPost(document.getElementById("post-id").value);
+        document.getElementById("post-body").textContent = post?.body;
+        document.getElementById("post-title").textContent = post?.title;
+        document.getElementById("post-username").textContent = post?.username;
+      }
+      document.getElementById("load-button").onclick = loadPost;
+    </script>
+  </head>
+  <body>
+    <pre id="post-title"></pre>
+    <pre id="post-body"></pre>
+    <pre id="post-username"></pre>
+    <ul id="post-why"></ul>
+    <form action="javascript:void(0);">
+      <input type="text" id="post-id" />
+      <button id="load-button">Load</button>
+    </form>
+  </body>
+</html>
