@@ -19,6 +19,12 @@
         white-space: pre-wrap;
         word-wrap: break-word;
       }
+      .labeled-output {
+        border: 1px solid #ddd;
+        padding: 2px;
+        border-radius: 4px;
+        margin: 2px;
+      }
     </style>
     <script type="module" defer>
       import { fetchPost } from "./dist/highlight-smokedetector-matches.js";
@@ -41,11 +47,25 @@
     </script>
   </head>
   <body>
-    <pre id="post-title"></pre>
-    <pre id="post-body"></pre>
-    <pre id="post-username"></pre>
-    <ul id="post-why"></ul>
+    <h1>highlight-smokedetector-matches Tester</h1>
+    <div class="labeled-output">
+      <label>Title</label>
+      <pre id="post-title"></pre>
+    </div>
+    <div class="labeled-output">
+      <label>Body</label>
+      <pre id="post-body"></pre>
+    </div>
+    <div class="labeled-output">
+      <label>Username</label>
+      <pre id="post-username"></pre>
+    </div>
+    <div class="labeled-output">
+      <label>Why</label>
+      <ul id="post-why"></ul>
+    </div>
     <form action="javascript:void(0);">
+      <label for="post-id">Post ID</label>
       <input type="text" id="post-id" />
       <button id="load-button">Load</button>
     </form>
