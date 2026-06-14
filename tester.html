@@ -27,6 +27,15 @@
         document.getElementById("post-body").textContent = post?.body;
         document.getElementById("post-title").textContent = post?.title;
         document.getElementById("post-username").textContent = post?.username;
+        let reasons = [];
+        if (post?.why) {
+          for (const why of post?.why) {
+            let element = document.createElement("li");
+            element.textContent = why;
+            reasons.push(element);
+          }
+        }
+        document.getElementById("post-why").replaceChildren(...reasons);
       }
       document.getElementById("load-button").onclick = loadPost;
     </script>
