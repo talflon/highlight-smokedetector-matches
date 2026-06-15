@@ -41,8 +41,22 @@ export async function fetchPost(id: number): Promise<Post | undefined> {
     title: title ?? "",
     body: body ?? "",
     username: username ?? "",
-    why: (why ?? "").split("\n").filter((r) => r),
+    why: splitWhy(why ?? ""),
   };
+}
+
+// Split on newlines, but only when the next line looks like it was SmokeDetector's words,
+// instead of part of a quotation from the post which included newlines.
+// Additionally, split the newline if it comes at the end, so as to trim it.
+const WHY_SPLIT_REGEX =
+  /\n(?=(?:[A-Z][a-z]+(?:[ -][a-z]+)* - |(?:Post|User) manually (?:report|scann)ed by |This post would not have been caught otherwise.(?:\n|$))|$)/;
+
+function splitWhy(rawWhy: string): string[] {
+  /**
+   * Splits the "why" field of a post into an array of individual reasons,
+   * since it's a line-deliminated string field.
+   */
+  return rawWhy.split(WHY_SPLIT_REGEX).filter((w) => w.trim()); // remove blank lines
 }
 
 export function escapeForPre(html: string): string {
