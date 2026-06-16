@@ -51,7 +51,7 @@ export async function fetchPost(id: number): Promise<Post | undefined> {
 const WHY_SPLIT_REGEX =
   /\n(?=(?:[A-Z][a-z]+(?:[ -][a-z]+)* - |(?:Post|User) manually (?:report|scann)ed by |This post would not have been caught otherwise.(?:\n|$))|$)/;
 
-function splitWhy(rawWhy: string): string[] {
+export function splitWhy(rawWhy: string): string[] {
   /**
    * Splits the "why" field of a post into an array of individual reasons,
    * since it's a line-deliminated string field.

@@ -6,8 +6,9 @@
 
     // Environment Settings
     "module": "esnext",
+    "moduleResolution": "bundler",
     "target": "es2021",
-    "types": [],
+    "types": ["jest"],
 
     // Other Outputs
     "sourceMap": true,
