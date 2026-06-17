@@ -9,6 +9,8 @@
     "ts-jest-resolver": "^2.0.1"
   },
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "compile": "tsc --project tsconfig.compile.json",
+    "clean": "rm -rf dist/*"
   }
 }

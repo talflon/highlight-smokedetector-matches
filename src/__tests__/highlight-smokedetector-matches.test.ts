@@ -1,4 +1,5 @@
-import { splitWhy } from "./highlight-smokedetector-matches";
+import { test, expect } from "@jest/globals";
+import { splitWhy } from "../highlight-smokedetector-matches";
 
 test.each([
   [[]],

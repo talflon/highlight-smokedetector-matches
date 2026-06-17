@@ -1,4 +1,6 @@
 {
+  "include": ["./src"],
+
   "compilerOptions": {
     // File Layout
     "rootDir": "./src",
@@ -8,7 +10,6 @@
     "module": "esnext",
     "moduleResolution": "bundler",
     "target": "es2021",
-    "types": ["jest"],
 
     // Other Outputs
     "sourceMap": true,
@@ -33,6 +34,6 @@
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
-    "skipLibCheck": true,
+    "skipLibCheck": true
   }
 }
