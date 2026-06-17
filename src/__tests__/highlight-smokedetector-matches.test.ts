@@ -24,6 +24,17 @@ test.each([
       "Three - y",
     ],
   ],
-])("splits correctly after joining: %s", (reasons, expected = undefined) => {
-  expect(splitWhy(reasons.join("\n"))).toEqual(expected ?? reasons);
+  [["Body - x", "Bo...abc", "Body - y"]],
+  [["Body - x", "Bod...abc", "Body - y"]],
+  [["Body - x", "Body...abc", "Body - y"]],
+  [["Body - x", "Body ...abc", "Body - y"]],
+  [["Body - x", "Body -...abc", "Body - y"]],
+  [["Body - x", "Po...abc", "Body - y"]],
+  [["Body - x", "Pos...abc", "Body - y"]],
+  [["Body - x", "Post...abc", "Body - y"]],
+  [["Body - x", "Post ...abc", "Body - y"]],
+  [["Body - x", "Post -...abc", "Body - y"]],
+  [["Body - x\nNope...abc", "Body - y"]],
+])("splits correctly after joining: %s", (reasons, expected = reasons) => {
+  expect(splitWhy(reasons.join("\n"))).toEqual(expected);
 });

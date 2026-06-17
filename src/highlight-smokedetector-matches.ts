@@ -47,7 +47,8 @@ export async function fetchPost(id: number): Promise<Post | undefined> {
 
 // Split on newlines, but only when the next line looks like it's a new SmokeDetector reason,
 // instead of part of a quotation from the post which included newlines.
-const WHY_SPLIT_REGEX = /\n(?=(?:[A-Z][a-z]+(?:[ -][a-z]+)* - ))/;
+const WHY_SPLIT_REGEX =
+  /\n(?=(?:[A-Z][a-z]+(?:[ -][a-z]+)* - )|(?:[BP]o|Bod|Pos|(?:Body|Post)(?: -?)?)\.\.\.)/;
 
 export function splitWhy(rawWhy: string): string[] {
   /**
