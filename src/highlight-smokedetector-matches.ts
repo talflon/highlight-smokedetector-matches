@@ -45,11 +45,9 @@ export async function fetchPost(id: number): Promise<Post | undefined> {
   };
 }
 
-// Split on newlines, but only when the next line looks like it was SmokeDetector's words,
+// Split on newlines, but only when the next line looks like it's a new SmokeDetector reason,
 // instead of part of a quotation from the post which included newlines.
-// Additionally, split the newline if it comes at the end, so as to trim it.
-const WHY_SPLIT_REGEX =
-  /\n(?=(?:[A-Z][a-z]+(?:[ -][a-z]+)* - |(?:Post|User) manually (?:report|scann)ed by |This post would not have been caught otherwise.(?:\n|$))|$)/;
+const WHY_SPLIT_REGEX = /\n(?=(?:[A-Z][a-z]+(?:[ -][a-z]+)* - ))/;
 
 export function splitWhy(rawWhy: string): string[] {
   /**
