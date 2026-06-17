@@ -36,9 +36,11 @@
         let reasons = [];
         if (post?.why) {
           for (const why of post?.why) {
-            let element = document.createElement("li");
-            element.textContent = why;
-            reasons.push(element);
+            let itemElement = document.createElement("li");
+            let preElement = document.createElement("pre");
+            itemElement.appendChild(preElement);
+            preElement.textContent = why;
+            reasons.push(itemElement);
           }
         }
         document.getElementById("post-why").replaceChildren(...reasons);
