@@ -10,6 +10,7 @@
     "module": "esnext",
     "moduleResolution": "bundler",
     "target": "es2021",
+    "esModuleInterop": true,
 
     // Other Outputs
     "sourceMap": true,

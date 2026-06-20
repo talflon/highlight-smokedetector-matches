@@ -1,3 +1,7 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import { test, expect, describe } from "@jest/globals";
 import {
   escapeForPre,
@@ -47,6 +51,10 @@ test.each([
 
 describe("HighlightedText", () => {
   describe("getPreText", () => {
+    function cleanWords(s: string): string {
+      return s.split(/\s+/).join(" ").trim();
+    }
+
     test("without highlights, should be the same as escapeForPre", () => {
       fc.assert(
         fc.property(fc.string(), fc.string(), (text, spanClass) => {
@@ -77,6 +85,44 @@ describe("HighlightedText", () => {
       expect(highlighted.getPreText("hi")).toBe(
         'highlight &lt; the <span class="hi">words &lt; words</span> in &lt; this',
       );
+    });
+
+    [
+      "",
+      "simple nothing highlighted",
+      "with a [single highlight]",
+      "[many] different [highlights here] etc",
+      "with a <faketag></faketag>",
+      "with [a <faketag></faketag>]",
+      "with a <faketag>[</faketag>]",
+    ].forEach((textWithBracketHighlights) => {
+      const rawText = textWithBracketHighlights.replace(/[\[\]]/g, " ");
+      const highlighted = new HighlightedText(rawText);
+      for (const match of textWithBracketHighlights.matchAll(/\[[^\[\]]+\]/g)) {
+        highlighted.addHighlight({
+          start: match.index,
+          end: match.index + match[0].length,
+        });
+      }
+      const preNode = document.createElement("pre");
+      const className = "any";
+      preNode.innerHTML = highlighted.getPreText(className);
+
+      test(`passes through to textContent: ${textWithBracketHighlights}`, () => {
+        expect(cleanWords(preNode.textContent)).toBe(cleanWords(rawText));
+      });
+
+      test(`spans contain proper text and class: ${textWithBracketHighlights}`, () => {
+        const highlightedText = Array.from(
+          textWithBracketHighlights.matchAll(/\[([^\[\]]+)\]/g),
+        ).map((m) => m[1]!);
+        const highlightedTextContent = Array.from(
+          preNode.getElementsByClassName(className),
+        ).map((el) => el.textContent);
+        expect(highlightedTextContent.map(cleanWords)).toStrictEqual(
+          highlightedText.map(cleanWords),
+        );
+      });
     });
   });
 
