@@ -1,5 +1,11 @@
-import { test, expect } from "@jest/globals";
-import { splitWhy } from "../highlight-smokedetector-matches";
+import { test, expect, describe } from "@jest/globals";
+import {
+  escapeForPre,
+  HighlightedText,
+  splitWhy,
+  type IndexRange,
+} from "../highlight-smokedetector-matches";
+import fc from "fast-check";
 
 test.each([
   [[]],
@@ -37,4 +43,121 @@ test.each([
   [["Body - x\nNope...abc", "Body - y"]],
 ])("splits correctly after joining: %s", (reasons, expected = reasons) => {
   expect(splitWhy(reasons.join("\n"))).toEqual(expected);
+});
+
+describe("HighlightedText", () => {
+  describe("getPreText", () => {
+    test("without highlights, should be the same as escapeForPre", () => {
+      fc.assert(
+        fc.property(fc.string(), fc.string(), (text, spanClass) => {
+          expect(new HighlightedText(text).getPreText(spanClass)).toBe(
+            escapeForPre(text),
+          );
+        }),
+      );
+    });
+
+    test("single span added", () => {
+      const text = "highlight the words words in this";
+      const toHighlight = "words words";
+      const highlighted = new HighlightedText(text);
+      const start = text.indexOf(toHighlight);
+      highlighted.addHighlight({ start, end: start + toHighlight.length });
+      expect(highlighted.getPreText("hi")).toBe(
+        'highlight the <span class="hi">words words</span> in this',
+      );
+    });
+
+    test("single span added and < escaped", () => {
+      const text = "highlight < the words < words in < this";
+      const toHighlight = "words < words";
+      const highlighted = new HighlightedText(text);
+      const start = text.indexOf(toHighlight);
+      highlighted.addHighlight({ start, end: start + toHighlight.length });
+      expect(highlighted.getPreText("hi")).toBe(
+        'highlight &lt; the <span class="hi">words &lt; words</span> in &lt; this',
+      );
+    });
+  });
+
+  describe("isHighlighted", () => {
+    test("new object never highlighted", () => {
+      fc.assert(
+        fc.property(fc.string({ minLength: 1 }), (text) => {
+          const highlighted = new HighlightedText(text);
+          for (let i = 0; i < text.length; i++) {
+            expect(highlighted.isHighlighted(i)).toBeFalsy();
+          }
+        }),
+      );
+    });
+
+    function arbRange(length: number): fc.Arbitrary<IndexRange> {
+      return fc
+        .tuple(
+          fc.integer({ min: 0, max: length - 1 }),
+          fc.integer({ min: 0, max: length - 1 }),
+        )
+        .chain(([i, j]) =>
+          fc.constant({ start: Math.min(i, j), end: Math.max(i, j) }),
+        );
+    }
+
+    test("single range", () => {
+      fc.assert(
+        fc.property(
+          fc
+            .string({ minLength: 1 })
+            .chain((text) =>
+              fc.tuple(fc.constant(text), arbRange(text.length)),
+            ),
+          ([text, highlight]) => {
+            const highlighted = new HighlightedText(text);
+            highlighted.addHighlight(highlight);
+            for (let i = 0; i < text.length; i++) {
+              expect(highlighted.isHighlighted(i)).toBe(
+                highlight.start <= i && i < highlight.end,
+              );
+            }
+          },
+        ),
+      );
+    });
+
+    test("many ranges", () => {
+      fc.assert(
+        fc.property(
+          fc
+            .string({ minLength: 1 })
+            .chain((text) =>
+              fc.tuple(
+                fc.constant(text),
+                fc.array(arbRange(text.length), { minLength: 2 }),
+              ),
+            ),
+          ([text, highlights]) => {
+            const highlighted = new HighlightedText(text);
+            for (const h of highlights) {
+              highlighted.addHighlight(h);
+            }
+            for (let i = 0; i < text.length; i++) {
+              let expected = false;
+              for (const h of highlights) {
+                expected ||= h.start <= i && i < h.end;
+              }
+              try {
+                expect(highlighted.isHighlighted(i)).toBe(expected);
+              } catch (_) {
+                expect(highlighted.isHighlighted(i)).toBe({
+                  expected,
+                  highlighted,
+                  i,
+                });
+              }
+            }
+          },
+        ),
+      );
+    });
+  });
 });
