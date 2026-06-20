@@ -49,12 +49,23 @@ test.each([
   expect(splitWhy(reasons.join("\n"))).toEqual(expected);
 });
 
+function cleanWords(s: string): string {
+  return s.replaceAll(/\s+/g, " ").trim();
+}
+
+function arbRange(length: number): fc.Arbitrary<IndexRange> {
+  return fc
+    .tuple(
+      fc.integer({ min: 0, max: length - 1 }),
+      fc.integer({ min: 0, max: length - 1 }),
+    )
+    .chain((indices) =>
+      fc.constant({ start: Math.min(...indices), end: Math.max(...indices) }),
+    );
+}
+
 describe("Highlighter", () => {
   describe("getPreText", () => {
-    function cleanWords(s: string): string {
-      return s.split(/\s+/).join(" ").trim();
-    }
-
     test("without highlights, should be the same as escapeForPre", () => {
       fc.assert(
         fc.property(fc.string(), fc.string(), (text, spanClass) => {
@@ -87,7 +98,7 @@ describe("Highlighter", () => {
       );
     });
 
-    [
+    for (const textWithBracketHighlights of [
       "",
       "simple nothing highlighted",
       "with a [single highlight]",
@@ -95,10 +106,10 @@ describe("Highlighter", () => {
       "with a <faketag></faketag>",
       "with [a <faketag></faketag>]",
       "with a <faketag>[</faketag>]",
-    ].forEach((textWithBracketHighlights) => {
-      const rawText = textWithBracketHighlights.replace(/[\[\]]/g, " ");
+    ]) {
+      const rawText = textWithBracketHighlights.replaceAll(/[[\]]/g, " ");
       const highlighter = new Highlighter(rawText);
-      for (const match of textWithBracketHighlights.matchAll(/\[[^\[\]]+\]/g)) {
+      for (const match of textWithBracketHighlights.matchAll(/\[[^[\]]+\]/g)) {
         highlighter.addHighlight({
           start: match.index,
           end: match.index + match[0].length,
@@ -114,16 +125,18 @@ describe("Highlighter", () => {
 
       test(`spans contain proper text and class: ${textWithBracketHighlights}`, () => {
         const highlightedText = Array.from(
-          textWithBracketHighlights.matchAll(/\[([^\[\]]+)\]/g),
-        ).map((m) => m[1]!);
-        const highlightedTextContent = Array.from(
-          preNode.getElementsByClassName(className),
-        ).map((el) => el.textContent);
-        expect(highlightedTextContent.map(cleanWords)).toStrictEqual(
-          highlightedText.map(cleanWords),
+          textWithBracketHighlights.matchAll(/\[([^[\]]+)\]/g),
+          (m) => m[1]!,
         );
+        const highlightedTextContent = Array.from(
+          preNode.querySelectorAll(`span.${className}`),
+          (span) => span.textContent,
+        );
+        expect(
+          highlightedTextContent.map((text) => cleanWords(text)),
+        ).toStrictEqual(highlightedText.map((text) => cleanWords(text)));
       });
-    });
+    }
   });
 
   describe("isHighlighted", () => {
@@ -131,23 +144,12 @@ describe("Highlighter", () => {
       fc.assert(
         fc.property(fc.string({ minLength: 1 }), (text) => {
           const highlighter = new Highlighter(text);
-          for (let i = 0; i < text.length; i++) {
-            expect(highlighter.isHighlighted(i)).toBeFalsy();
+          for (let charIdx = 0; charIdx < text.length; charIdx++) {
+            expect(highlighter.isHighlighted(charIdx)).toBeFalsy();
           }
         }),
       );
     });
-
-    function arbRange(length: number): fc.Arbitrary<IndexRange> {
-      return fc
-        .tuple(
-          fc.integer({ min: 0, max: length - 1 }),
-          fc.integer({ min: 0, max: length - 1 }),
-        )
-        .chain(([i, j]) =>
-          fc.constant({ start: Math.min(i, j), end: Math.max(i, j) }),
-        );
-    }
 
     test("single range", () => {
       fc.assert(
@@ -160,9 +162,9 @@ describe("Highlighter", () => {
           ([text, highlight]) => {
             const highlighter = new Highlighter(text);
             highlighter.addHighlight(highlight);
-            for (let i = 0; i < text.length; i++) {
-              expect(highlighter.isHighlighted(i)).toBe(
-                highlight.start <= i && i < highlight.end,
+            for (let charIdx = 0; charIdx < text.length; charIdx++) {
+              expect(highlighter.isHighlighted(charIdx)).toBe(
+                highlight.start <= charIdx && charIdx < highlight.end,
               );
             }
           },
@@ -186,18 +188,18 @@ describe("Highlighter", () => {
             for (const h of highlights) {
               highlighter.addHighlight(h);
             }
-            for (let i = 0; i < text.length; i++) {
-              let expected = false;
+            for (let charIdx = 0; charIdx < text.length; charIdx++) {
+              let isExpected = false;
               for (const h of highlights) {
-                expected ||= h.start <= i && i < h.end;
+                isExpected ||= h.start <= charIdx && charIdx < h.end;
               }
               try {
-                expect(highlighter.isHighlighted(i)).toBe(expected);
-              } catch (_) {
-                expect(highlighter.isHighlighted(i)).toBe({
-                  expected,
+                expect(highlighter.isHighlighted(charIdx)).toBe(isExpected);
+              } catch {
+                expect(highlighter.isHighlighted(charIdx)).toBe({
+                  isExpected,
                   highlighter,
-                  i,
+                  i: charIdx,
                 });
               }
             }

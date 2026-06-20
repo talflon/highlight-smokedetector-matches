@@ -83,15 +83,16 @@ export class Highlighter {
    */
   addHighlight(highlight: IndexRange) {
     if (highlight.end == highlight.start) return;
-    else if (highlight.end < highlight.start)
-      throw Error(`Invalid range ${this}`);
-    for (let i = 0; i < this.highlights.length; i++) {
-      const existing = this.highlights[i]!;
+    if (highlight.end < highlight.start)
+      throw new Error(`Invalid range ${this}`);
+    for (let insertIdx = 0; insertIdx < this.highlights.length; insertIdx++) {
+      const existing = this.highlights[insertIdx]!;
       if (highlight.end < existing.start) {
         // We don't overlap, so this is where to insert.
-        this.highlights.splice(i, 0, { ...highlight });
+        this.highlights.splice(insertIdx, 0, { ...highlight });
         return;
-      } else if (highlight.start <= existing.end) {
+      }
+      if (highlight.start <= existing.end) {
         // We overlap, so merge
         existing.start = Math.min(existing.start, highlight.start);
         if (highlight.end > existing.end) {
@@ -100,24 +101,22 @@ export class Highlighter {
           // Delete the ones we overlap entirely
           let delCount = 0;
           for (
-            let j = i + 1;
-            j < this.highlights.length &&
-            existing.end >= this.highlights[j]!.end;
-            j++
+            let delIdx = insertIdx + 1;
+            delIdx < this.highlights.length &&
+            existing.end >= this.highlights[delIdx]!.end;
+            delIdx++
           ) {
             delCount++;
           }
           if (delCount) {
-            this.highlights.splice(i + 1, delCount);
+            this.highlights.splice(insertIdx + 1, delCount);
           }
 
           // If there's now one we overlap partially, merge with it
-          const other = this.highlights[i + 1];
-          if (other !== undefined) {
-            if (existing.end >= other.start) {
-              existing.end = other.end;
-              this.highlights.splice(i + 1, 1);
-            }
+          const other = this.highlights[insertIdx + 1];
+          if (other !== undefined && existing.end >= other.start) {
+            existing.end = other.end;
+            this.highlights.splice(insertIdx + 1, 1);
           }
         }
         return;
@@ -136,7 +135,8 @@ export class Highlighter {
     for (const highlight of this.highlights) {
       if (index < highlight.start) {
         return false;
-      } else if (index < highlight.end) {
+      }
+      if (index < highlight.end) {
         return true;
       }
     }
