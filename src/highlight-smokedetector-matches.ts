@@ -66,7 +66,7 @@ export type IndexRange = {
   start: number;
   end: number;
 };
-export class HighlightedText {
+export class Highlighter {
   /** The raw text */
   text: string;
   /** Sorted list of non-overlapping ranges that are highlighted */

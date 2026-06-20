@@ -5,7 +5,7 @@
 import { test, expect, describe } from "@jest/globals";
 import {
   escapeForPre,
-  HighlightedText,
+  Highlighter,
   splitWhy,
   type IndexRange,
 } from "../highlight-smokedetector-matches";
@@ -49,7 +49,7 @@ test.each([
   expect(splitWhy(reasons.join("\n"))).toEqual(expected);
 });
 
-describe("HighlightedText", () => {
+describe("Highlighter", () => {
   describe("getPreText", () => {
     function cleanWords(s: string): string {
       return s.split(/\s+/).join(" ").trim();
@@ -58,7 +58,7 @@ describe("HighlightedText", () => {
     test("without highlights, should be the same as escapeForPre", () => {
       fc.assert(
         fc.property(fc.string(), fc.string(), (text, spanClass) => {
-          expect(new HighlightedText(text).getPreText(spanClass)).toBe(
+          expect(new Highlighter(text).getPreText(spanClass)).toBe(
             escapeForPre(text),
           );
         }),
@@ -68,10 +68,10 @@ describe("HighlightedText", () => {
     test("single span added", () => {
       const text = "highlight the words words in this";
       const toHighlight = "words words";
-      const highlighted = new HighlightedText(text);
+      const highlighter = new Highlighter(text);
       const start = text.indexOf(toHighlight);
-      highlighted.addHighlight({ start, end: start + toHighlight.length });
-      expect(highlighted.getPreText("hi")).toBe(
+      highlighter.addHighlight({ start, end: start + toHighlight.length });
+      expect(highlighter.getPreText("hi")).toBe(
         'highlight the <span class="hi">words words</span> in this',
       );
     });
@@ -79,10 +79,10 @@ describe("HighlightedText", () => {
     test("single span added and < escaped", () => {
       const text = "highlight < the words < words in < this";
       const toHighlight = "words < words";
-      const highlighted = new HighlightedText(text);
+      const highlighter = new Highlighter(text);
       const start = text.indexOf(toHighlight);
-      highlighted.addHighlight({ start, end: start + toHighlight.length });
-      expect(highlighted.getPreText("hi")).toBe(
+      highlighter.addHighlight({ start, end: start + toHighlight.length });
+      expect(highlighter.getPreText("hi")).toBe(
         'highlight &lt; the <span class="hi">words &lt; words</span> in &lt; this',
       );
     });
@@ -97,16 +97,16 @@ describe("HighlightedText", () => {
       "with a <faketag>[</faketag>]",
     ].forEach((textWithBracketHighlights) => {
       const rawText = textWithBracketHighlights.replace(/[\[\]]/g, " ");
-      const highlighted = new HighlightedText(rawText);
+      const highlighter = new Highlighter(rawText);
       for (const match of textWithBracketHighlights.matchAll(/\[[^\[\]]+\]/g)) {
-        highlighted.addHighlight({
+        highlighter.addHighlight({
           start: match.index,
           end: match.index + match[0].length,
         });
       }
       const preNode = document.createElement("pre");
       const className = "any";
-      preNode.innerHTML = highlighted.getPreText(className);
+      preNode.innerHTML = highlighter.getPreText(className);
 
       test(`passes through to textContent: ${textWithBracketHighlights}`, () => {
         expect(cleanWords(preNode.textContent)).toBe(cleanWords(rawText));
@@ -130,9 +130,9 @@ describe("HighlightedText", () => {
     test("new object never highlighted", () => {
       fc.assert(
         fc.property(fc.string({ minLength: 1 }), (text) => {
-          const highlighted = new HighlightedText(text);
+          const highlighter = new Highlighter(text);
           for (let i = 0; i < text.length; i++) {
-            expect(highlighted.isHighlighted(i)).toBeFalsy();
+            expect(highlighter.isHighlighted(i)).toBeFalsy();
           }
         }),
       );
@@ -158,10 +158,10 @@ describe("HighlightedText", () => {
               fc.tuple(fc.constant(text), arbRange(text.length)),
             ),
           ([text, highlight]) => {
-            const highlighted = new HighlightedText(text);
-            highlighted.addHighlight(highlight);
+            const highlighter = new Highlighter(text);
+            highlighter.addHighlight(highlight);
             for (let i = 0; i < text.length; i++) {
-              expect(highlighted.isHighlighted(i)).toBe(
+              expect(highlighter.isHighlighted(i)).toBe(
                 highlight.start <= i && i < highlight.end,
               );
             }
@@ -182,9 +182,9 @@ describe("HighlightedText", () => {
               ),
             ),
           ([text, highlights]) => {
-            const highlighted = new HighlightedText(text);
+            const highlighter = new Highlighter(text);
             for (const h of highlights) {
-              highlighted.addHighlight(h);
+              highlighter.addHighlight(h);
             }
             for (let i = 0; i < text.length; i++) {
               let expected = false;
@@ -192,11 +192,11 @@ describe("HighlightedText", () => {
                 expected ||= h.start <= i && i < h.end;
               }
               try {
-                expect(highlighted.isHighlighted(i)).toBe(expected);
+                expect(highlighter.isHighlighted(i)).toBe(expected);
               } catch (_) {
-                expect(highlighted.isHighlighted(i)).toBe({
+                expect(highlighter.isHighlighted(i)).toBe({
                   expected,
-                  highlighted,
+                  highlighter,
                   i,
                 });
               }
