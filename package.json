@@ -11,13 +11,14 @@
     "fast-check": "^4.8.0",
     "jest": "^30.4.2",
     "jest-environment-jsdom": "^30.4.1",
+    "prettier": "^3.8.4",
     "ts-jest": "^29.4.11",
     "ts-jest-resolver": "^2.0.1",
     "typescript-eslint": "^8.61.1"
   },
   "scripts": {
     "test": "jest",
-    "compile": "tsc --project tsconfig.compile.json",
+    "compile": "tsc --project tsconfig.compile.json && prettier --ignore-path='' --write dist/*.js",
     "clean": "rm -rf dist/*"
   }
 }
