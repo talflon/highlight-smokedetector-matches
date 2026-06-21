@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import { test, expect, describe } from "@jest/globals";
+import { jest, test, expect, describe } from "@jest/globals";
 import {
   escapeForPre,
   Highlighter,
@@ -210,7 +210,7 @@ describe("Highlighter", () => {
   });
 
   describe("addHighlight", () => {
-    test("errors if invalid integer range", () => {
+    test("errors iff invalid integer range", () => {
       fc.assert(
         fc.property(
           fc.string(),
@@ -218,9 +218,18 @@ describe("Highlighter", () => {
           (text, highlight) => {
             const highlighter = new Highlighter(text);
             if (0 <= highlight.start && highlight.start <= highlight.end) {
+              jest
+                .spyOn(globalThis.console, "warn")
+                .mockImplementation((message: string) => {
+                  if (!message.startsWith("Highlight range out of bounds:")) {
+                    globalThis.console.warn(message);
+                  }
+                });
               highlighter.addHighlight(highlight);
             } else {
-              expect(() => highlighter.addHighlight(highlight)).toThrow();
+              expect(() => highlighter.addHighlight(highlight)).toThrow(
+                RangeError,
+              );
             }
           },
         ),
@@ -242,7 +251,9 @@ describe("Highlighter", () => {
             ),
           (text, highlight) => {
             const highlighter = new Highlighter(text);
-            expect(() => highlighter.addHighlight(highlight)).toThrow();
+            expect(() => highlighter.addHighlight(highlight)).toThrow(
+              RangeError,
+            );
           },
         ),
       );

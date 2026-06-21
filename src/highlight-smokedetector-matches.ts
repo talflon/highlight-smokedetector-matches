@@ -88,7 +88,9 @@ export class Highlighter {
       !Number.isSafeInteger(highlight.start) ||
       !Number.isSafeInteger(highlight.end)
     )
-      throw new Error(`Invalid range ${highlight.start}, ${highlight.end}`);
+      throw new RangeError(
+        `Invalid range ${highlight.start}, ${highlight.end}`,
+      );
     if (highlight.end > this.text.length) {
       console.warn(
         `Highlight range out of bounds: ${highlight.start}, ${highlight.end} for ${this.text.length} chars`,

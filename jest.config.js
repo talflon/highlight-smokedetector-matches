@@ -8,3 +8,6 @@ export const transform = {
   ...tsJestTransformCfg,
 };
 export const resolver = "ts-jest-resolver";
+export const restoreMocks = true;
+export const resetMocks = true;
+export const clearMocks = true;
