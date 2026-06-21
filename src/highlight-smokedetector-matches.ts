@@ -81,7 +81,7 @@ export class Highlighter {
    * Highlights the given range
    * @param highlight the range to add
    */
-  addHighlight(highlight: IndexRange) {
+  addHighlight(highlight: Readonly<IndexRange>) {
     if (
       highlight.end < highlight.start ||
       highlight.start < 0 ||
