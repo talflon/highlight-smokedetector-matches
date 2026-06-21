@@ -19,5 +19,6 @@ export default defineConfig({
     "@typescript-eslint/no-non-null-assertion": "warn",
     "unicorn/name-replacements": "warn",
     "unicorn/filename-case": ["error", { ignore: ["^__tests__$"] }],
+    "unicorn/max-nested-calls": "warn",
   },
 });

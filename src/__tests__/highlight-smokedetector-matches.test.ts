@@ -208,4 +208,44 @@ describe("Highlighter", () => {
       );
     });
   });
+
+  describe("addHighlight", () => {
+    test("errors if invalid integer range", () => {
+      fc.assert(
+        fc.property(
+          fc.string(),
+          fc.record({ start: fc.integer(), end: fc.integer() }),
+          (text, highlight) => {
+            const highlighter = new Highlighter(text);
+            if (0 <= highlight.start && highlight.start <= highlight.end) {
+              highlighter.addHighlight(highlight);
+            } else {
+              expect(() => highlighter.addHighlight(highlight)).toThrow();
+            }
+          },
+        ),
+      );
+    });
+  });
+
+  describe("addHighlight", () => {
+    test("errors if invalid numbers in range", () => {
+      const arbNumber = fc.oneof(fc.nat(10), fc.double());
+      fc.assert(
+        fc.property(
+          fc.string(),
+          fc
+            .record({ start: arbNumber, end: arbNumber })
+            .filter(
+              ({ start, end }) =>
+                !Number.isSafeInteger(start) || !Number.isSafeInteger(end),
+            ),
+          (text, highlight) => {
+            const highlighter = new Highlighter(text);
+            expect(() => highlighter.addHighlight(highlight)).toThrow();
+          },
+        ),
+      );
+    });
+  });
 });

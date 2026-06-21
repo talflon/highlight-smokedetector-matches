@@ -82,9 +82,22 @@ export class Highlighter {
    * @param highlight the range to add
    */
   addHighlight(highlight: IndexRange) {
+    if (
+      highlight.end < highlight.start ||
+      highlight.start < 0 ||
+      !Number.isSafeInteger(highlight.start) ||
+      !Number.isSafeInteger(highlight.end)
+    )
+      throw new Error(`Invalid range ${highlight.start}, ${highlight.end}`);
+    if (highlight.end > this.text.length) {
+      console.warn(
+        `Highlight range out of bounds: ${highlight.start}, ${highlight.end} for ${this.text.length} chars`,
+      );
+      if (highlight.start >= this.text.length) return;
+      highlight = { start: highlight.start, end: this.text.length };
+    }
     if (highlight.end == highlight.start) return;
-    if (highlight.end < highlight.start)
-      throw new Error(`Invalid range ${this}`);
+
     for (let insertIdx = 0; insertIdx < this.highlights.length; insertIdx++) {
       const existing = this.highlights[insertIdx]!;
       if (highlight.end < existing.start) {
