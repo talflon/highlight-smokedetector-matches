@@ -55,13 +55,34 @@ function cleanWords(s: string): string {
 
 function arbRange(length: number): fc.Arbitrary<IndexRange> {
   return fc
-    .tuple(
-      fc.integer({ min: 0, max: length - 1 }),
-      fc.integer({ min: 0, max: length - 1 }),
-    )
+    .tuple(fc.nat(length - 1), fc.nat(length - 1))
     .chain((indices) =>
       fc.constant({ start: Math.min(...indices), end: Math.max(...indices) }),
     );
+}
+
+function expectHighlighterInValidState(highlighter: Highlighter) {
+  let previous;
+  for (const r of highlighter.highlights) {
+    expect(Number.isSafeInteger(r.start)).toBeTruthy();
+    expect(Number.isSafeInteger(r.end)).toBeTruthy();
+    expect(r.end).toBeGreaterThan(r.start);
+    expect(r.end).toBeLessThanOrEqual(highlighter.text.length);
+    if (previous !== undefined) {
+      expect(r.start).toBeGreaterThan(previous.end);
+    }
+    previous = r;
+  }
+}
+
+function ignoreRangeWarnings() {
+  return jest
+    .spyOn(globalThis.console, "warn")
+    .mockImplementation((message: string) => {
+      if (!message.startsWith("Highlight range out of bounds:")) {
+        globalThis.console.warn(message);
+      }
+    });
 }
 
 describe("Highlighter", () => {
@@ -137,6 +158,29 @@ describe("Highlighter", () => {
         ).toStrictEqual(highlightedText.map((text) => cleanWords(text)));
       });
     }
+
+    test("textContent matches text down to whitespace differences", () => {
+      fc.assert(
+        fc.property(
+          fc
+            .string({ minLength: 1 })
+            .chain((text) =>
+              fc.tuple(fc.constant(text), fc.array(arbRange(text.length))),
+            ),
+          ([text, highlights]) => {
+            const highlighter = new Highlighter(text);
+            for (const h of highlights) {
+              highlighter.addHighlight(h);
+            }
+            const preNode = document.createElement("pre");
+            preNode.innerHTML = highlighter.getPreText("testing");
+            expect(preNode.textContent.replaceAll(/\s+/g, "")).toBe(
+              text.replaceAll(/\s+/g, ""),
+            );
+          },
+        ),
+      );
+    });
   });
 
   describe("isHighlighted", () => {
@@ -218,13 +262,7 @@ describe("Highlighter", () => {
           (text, highlight) => {
             const highlighter = new Highlighter(text);
             if (0 <= highlight.start && highlight.start <= highlight.end) {
-              jest
-                .spyOn(globalThis.console, "warn")
-                .mockImplementation((message: string) => {
-                  if (!message.startsWith("Highlight range out of bounds:")) {
-                    globalThis.console.warn(message);
-                  }
-                });
+              ignoreRangeWarnings();
               highlighter.addHighlight(highlight);
             } else {
               expect(() => highlighter.addHighlight(highlight)).toThrow(
@@ -258,5 +296,77 @@ describe("Highlighter", () => {
         ),
       );
     });
+  });
+
+  test("remains in valid state for valid inputs", () => {
+    fc.assert(
+      fc.property(
+        fc
+          .string({ minLength: 1 })
+          .chain((text) =>
+            fc.tuple(fc.constant(text), fc.array(arbRange(text.length))),
+          ),
+        ([text, highlights]) => {
+          const highlighter = new Highlighter(text);
+          expectHighlighterInValidState(highlighter);
+          for (const h of highlights) {
+            highlighter.addHighlight(h);
+            expectHighlighterInValidState(highlighter);
+          }
+        },
+      ),
+    );
+  });
+
+  test("remains in valid state for valid inputs", () => {
+    fc.assert(
+      fc.property(
+        fc
+          .string({ minLength: 1 })
+          .chain((text) =>
+            fc.tuple(fc.constant(text), fc.array(arbRange(text.length))),
+          ),
+        ([text, highlights]) => {
+          const highlighter = new Highlighter(text);
+          expectHighlighterInValidState(highlighter);
+          for (const h of highlights) {
+            highlighter.addHighlight(h);
+            expectHighlighterInValidState(highlighter);
+          }
+        },
+      ),
+    );
+  });
+
+  test("remains in valid state for all inputs", () => {
+    const arbNumber = (text: string) =>
+      fc.oneof(fc.nat(text.length), fc.double());
+    fc.assert(
+      fc.property(
+        fc
+          .string({ minLength: 1 })
+          .chain((text) =>
+            fc.tuple(
+              fc.constant(text),
+              fc.array(
+                fc.record({ start: arbNumber(text), end: arbNumber(text) }),
+              ),
+            ),
+          ),
+        ([text, highlights]) => {
+          ignoreRangeWarnings();
+          const highlighter = new Highlighter(text);
+          expectHighlighterInValidState(highlighter);
+          for (const h of highlights) {
+            try {
+              highlighter.addHighlight(h);
+            } catch (error) {
+              if (!(error instanceof RangeError)) throw error;
+            }
+            expectHighlighterInValidState(highlighter);
+          }
+        },
+      ),
+    );
   });
 });
