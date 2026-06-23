@@ -48,13 +48,13 @@ export async function fetchPost(id: number): Promise<Post | undefined> {
 // Split on newlines, but only when the next line looks like it's a new SmokeDetector reason,
 // instead of part of a quotation from the post which included newlines.
 const WHY_SPLIT_REGEX =
-  /\n(?=(?:[A-Z][a-z]+(?:[ -][a-z]+)* - )|(?:[BP]o|Bod|Pos|(?:Body|Post)(?: -?)?)\.\.\.)/;
+  /\n(?=(?:[A-Z][a-z]*(?:[ -][a-z]+)* - )|(?:[BP]o|Bod|Pos|(?:Body|Post)(?: -?)?)\.\.\.)/;
 
+/**
+ * Splits the "why" field of a post into an array of individual reasons,
+ * since it's a line-deliminated string field.
+ */
 export function splitWhy(rawWhy: string): string[] {
-  /**
-   * Splits the "why" field of a post into an array of individual reasons,
-   * since it's a line-deliminated string field.
-   */
   return rawWhy.split(WHY_SPLIT_REGEX).filter((w) => w.trim()); // remove blank lines
 }
 
@@ -66,6 +66,58 @@ export type IndexRange = {
   start: number;
   end: number;
 };
+
+export type PostField = "body" | "title" | "username";
+
+export type WhyMatch = {
+  reason: string;
+  postField?: PostField;
+  details: string;
+};
+
+/**
+ * Attempts to parse a line of the "why" into a WhyMatch
+ */
+export function parseReason(whyLine: string): WhyMatch | undefined {
+  const reasonMatch = whyLine.match(
+    /^(?:(?:([A-Z][a-z]*(?:[ -][a-z]+)*) - )|(?:([BP]o|Bod|Pos)|(Body|Post)(?: -?)?)\.\.\.)/,
+  );
+  if (!reasonMatch) {
+    return undefined;
+  }
+  // Every branch has a capturing group, so there must be a defined one at index > 0
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const reason = reasonMatch.find((reason, index) => index && reason)!;
+  const details = whyLine.slice(reasonMatch[0].length);
+  const postFieldMatch = reason.match(/ in (body|answer|title|username)$/);
+  return postFieldMatch
+    ? {
+        reason: reason.slice(0, postFieldMatch.index),
+        postField:
+          postFieldMatch[1] === "answer"
+            ? "body"
+            : (postFieldMatch[1] as PostField),
+        details,
+      }
+    : { reason, details };
+}
+
+const BLACKLIST_REASONS = new Set([
+  "Potentially bad keyword",
+  "Bad keyword",
+  "Blacklisted website",
+]);
+
+export function isBlacklistReason(whyMatch: WhyMatch): boolean {
+  return BLACKLIST_REASONS.has(whyMatch.reason);
+}
+
+export function getReasonPositions(whyMatch: WhyMatch): IndexRange[] {
+  return Array.from(whyMatch.details.matchAll(/([0-9]+)-([0-9]+)/g), (m) => {
+    return { start: Number(m[1]), end: Number(m[2]) };
+  });
+}
+
 export class Highlighter {
   /** The raw text */
   text: string;

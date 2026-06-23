@@ -1,15 +1,25 @@
 /**
  * @jest-environment jsdom
  */
+/* eslint-disable unicorn/max-nested-calls */
+/* eslint-disable unicorn/numeric-separators-style */
 
 import { jest, test, expect, describe } from "@jest/globals";
 import {
   escapeForPre,
+  getReasonPositions,
   Highlighter,
+  isBlacklistReason,
+  parseReason,
   splitWhy,
   type IndexRange,
+  type PostField,
 } from "../highlight-smokedetector-matches";
 import fc from "fast-check";
+
+function expectToBeDefined<T>(actual: T | undefined): asserts actual is T {
+  expect(actual).toBeDefined();
+}
 
 test.each([
   [[]],
@@ -369,4 +379,57 @@ describe("Highlighter", () => {
       ),
     );
   });
+});
+
+describe("WhyMatch", () => {
+  test.each(["", "Some other reason"])(
+    "Not a blacklist reason: %s",
+    (whyLine) => {
+      const whyMatch = parseReason(whyLine);
+      expect(whyMatch && isBlacklistReason(whyMatch)).toBeFalsy();
+    },
+  );
+
+  test.each<[string, PostField, IndexRange[]]>([
+    [
+      "Potentially bad keyword in body - Position 1-5: what",
+      "body",
+      [{ start: 1, end: 5 }],
+    ],
+    [
+      "Potentially bad keyword in answer - Position 558-572: bademail 12, Position 576-591: G M A I L C O M",
+      "body",
+      [
+        { start: 558, end: 572 },
+        { start: 576, end: 591 },
+      ],
+    ],
+    [
+      "Bad keyword in title - Positions 10-15, 19-23: whatEver",
+      "title",
+      [
+        { start: 10, end: 15 },
+        { start: 19, end: 23 },
+      ],
+    ],
+    [
+      "Potentially bad keyword in username - Position 0-9: sus",
+      "username",
+      [{ start: 0, end: 9 }],
+    ],
+    [
+      "Blacklisted website in body - Position 12883-12901: evil.site",
+      "body",
+      [{ start: 12883, end: 12901 }],
+    ],
+  ])(
+    "Parsing WhyMatch with positions: %s",
+    (whyLine, postField, expectedPositions) => {
+      const whyMatch = parseReason(whyLine);
+      expectToBeDefined(whyMatch);
+      expect(whyMatch.postField).toBe(postField);
+      expect(isBlacklistReason(whyMatch)).toBeTruthy();
+      expect(getReasonPositions(whyMatch)).toStrictEqual(expectedPositions);
+    },
+  );
 });
