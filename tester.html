@@ -25,22 +25,49 @@
         border-radius: 4px;
         margin: 2px;
       }
+      .highlighted {
+        background-color: #f80;
+      }
     </style>
     <script type="module" defer>
-      import { fetchPost } from "./dist/highlight-smokedetector-matches.js";
+      import {
+        fetchPost,
+        Highlighter,
+        parseReason,
+        isBlacklistReason,
+        getReasonPositions,
+      } from "./dist/highlight-smokedetector-matches.js";
       async function loadPost() {
-        let post = await fetchPost(document.getElementById("post-id").value);
+        const post = await fetchPost(document.getElementById("post-id").value);
         document.getElementById("post-body").textContent = post?.body;
         document.getElementById("post-title").textContent = post?.title;
         document.getElementById("post-username").textContent = post?.username;
-        let reasons = [];
+        const reasons = [];
         if (post?.why) {
-          for (const why of post?.why) {
-            let itemElement = document.createElement("li");
-            let preElement = document.createElement("pre");
+          const highlighters = new Map();
+          highlighters.set("body", new Highlighter(post.body));
+          highlighters.set("title", new Highlighter(post.title));
+          highlighters.set("username", new Highlighter(post.username));
+          for (const why of post.why) {
+            const itemElement = document.createElement("li");
+            const preElement = document.createElement("pre");
             itemElement.appendChild(preElement);
             preElement.textContent = why;
             reasons.push(itemElement);
+
+            const whyMatch = parseReason(why);
+            if (whyMatch && isBlacklistReason(whyMatch)) {
+              const highlighter = highlighters.get(whyMatch.postField);
+              for (const range of getReasonPositions(whyMatch)) {
+                highlighter.addHighlight(range);
+              }
+            }
+          }
+          console.log(highlighters);
+          for (const [field, highlighter] of highlighters) {
+            console.log({ field, highlighter });
+            document.getElementById("post-" + field).innerHTML =
+              highlighter.getPreText("highlighted");
           }
         }
         document.getElementById("post-why").replaceChildren(...reasons);
