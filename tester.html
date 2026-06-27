@@ -57,15 +57,14 @@
 
             const whyMatch = parseReason(why);
             if (whyMatch && isBlacklistReason(whyMatch)) {
+              preElement.classList += "highlighted";
               const highlighter = highlighters.get(whyMatch.postField);
               for (const range of getReasonPositions(whyMatch)) {
                 highlighter.addHighlight(range);
               }
             }
           }
-          console.log(highlighters);
           for (const [field, highlighter] of highlighters) {
-            console.log({ field, highlighter });
             document.getElementById("post-" + field).innerHTML =
               highlighter.getPreText("highlighted");
           }
