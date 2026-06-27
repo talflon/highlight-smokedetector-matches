@@ -45,10 +45,14 @@ export async function fetchPost(id: number): Promise<Post | undefined> {
   };
 }
 
+const WHY_REASON_REGEX =
+  /(?:([A-Z][a-z]*(?:[ -][a-z]+)*) - )|(?:([BP]o|Bod|Pos)|(Body|Post)(?: -?)?)\.\.\./;
+
 // Split on newlines, but only when the next line looks like it's a new SmokeDetector reason,
 // instead of part of a quotation from the post which included newlines.
-const WHY_SPLIT_REGEX =
-  /\n(?=(?:[A-Z][a-z]*(?:[ -][a-z]+)* - )|(?:[BP]o|Bod|Pos|(?:Body|Post)(?: -?)?)\.\.\.)/;
+const WHY_SPLIT_REGEX = new RegExp(
+  String.raw`\n(?=${WHY_REASON_REGEX.source.replaceAll(/\((?<!\\)(?!\?)/g, "(?:")})`,
+);
 
 /**
  * Splits the "why" field of a post into an array of individual reasons,
@@ -75,13 +79,13 @@ export type WhyMatch = {
   details: string;
 };
 
+const PARSE_REASON_REGEX = new RegExp(`^(?:${WHY_REASON_REGEX.source})`);
+
 /**
  * Attempts to parse a line of the "why" into a WhyMatch
  */
 export function parseReason(whyLine: string): WhyMatch | undefined {
-  const reasonMatch = whyLine.match(
-    /^(?:(?:([A-Z][a-z]*(?:[ -][a-z]+)*) - )|(?:([BP]o|Bod|Pos)|(Body|Post)(?: -?)?)\.\.\.)/,
-  );
+  const reasonMatch = whyLine.match(PARSE_REASON_REGEX);
   if (!reasonMatch) {
     return undefined;
   }
