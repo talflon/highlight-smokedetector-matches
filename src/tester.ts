@@ -14,6 +14,7 @@ async function loadPost() {
   if (!idElement) throw new Error("Couldn't find post-id");
   const post = await fetchPost(parseInt(idElement.value));
 
+  // Set initial values without highlighting; we'll replace later if highlighting succeeds.
   for (const field of FIELDS) {
     for (const fieldElement of document.querySelectorAll(`#post-${field}`)) {
       fieldElement.textContent = post?.[field] ?? "";
@@ -54,6 +55,14 @@ async function loadPost() {
   whyListElement.replaceChildren(...reasons);
 }
 
-const loadButtonElement = document.querySelector("#load-button");
+const loadButtonElement: HTMLButtonElement | null =
+  document.querySelector("#load-button");
 if (!loadButtonElement) throw new Error("Couldn't find load-button");
-loadButtonElement.addEventListener("click", loadPost);
+loadButtonElement.addEventListener("click", async () => {
+  loadButtonElement.disabled = true;
+  try {
+    await loadPost();
+  } finally {
+    loadButtonElement.disabled = false;
+  }
+});
