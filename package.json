@@ -1,8 +1,15 @@
 {
+  "name": "highlight-smokedetector-matches",
+  "version": "0.0.1",
+  "author": {
+    "name": "Daniel Getz",
+    "email": "dan@getzit.net"
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/jest": "^30.0.0",
     "@types/jsdom": "^28.0.3",
+    "esbuild": "^0.28.1",
     "eslint": "^10.5.0",
     "eslint-plugin-unicorn": "^68.0.0",
     "fast-check": "^4.8.0",
@@ -17,6 +24,7 @@
   "scripts": {
     "test": "tsc --noEmit && jest",
     "compile": "tsc --project tsconfig.compile.json && prettier --ignore-path='' --write dist/*.js",
-    "clean": "rm -rf dist/*"
+    "clean": "rm -rf dist/*",
+    "build": "node build.mjs"
   }
 }
