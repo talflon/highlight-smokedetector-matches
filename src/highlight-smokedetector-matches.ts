@@ -73,6 +73,8 @@ export type IndexRange = {
 
 export type PostField = "body" | "title" | "username";
 
+export const POST_FIELDS: PostField[] = ["body", "title", "username"];
+
 export type WhyMatch = {
   reason: string;
   postField?: PostField;

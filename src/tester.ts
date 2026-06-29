@@ -5,9 +5,8 @@ import {
   isBlacklistReason,
   getReasonPositions,
   type PostField,
+  POST_FIELDS,
 } from "./highlight-smokedetector-matches.js";
-
-const FIELDS: PostField[] = ["body", "title", "username"];
 
 async function loadPost() {
   const idElement: HTMLInputElement | null = document.querySelector("#post-id");
@@ -15,7 +14,7 @@ async function loadPost() {
   const post = await fetchPost(parseInt(idElement.value));
 
   // Set initial values without highlighting; we'll replace later if highlighting succeeds.
-  for (const field of FIELDS) {
+  for (const field of POST_FIELDS) {
     for (const fieldElement of document.querySelectorAll(`#post-${field}`)) {
       fieldElement.textContent = post?.[field] ?? "";
     }
@@ -44,7 +43,7 @@ async function loadPost() {
         }
       }
     }
-    for (const field of FIELDS) {
+    for (const field of POST_FIELDS) {
       for (const fieldElement of document.querySelectorAll(`#post-${field}`)) {
         fieldElement.innerHTML = highlighters[field].getPreText("highlighted");
       }
