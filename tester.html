@@ -29,50 +29,7 @@
         background-color: #f80;
       }
     </style>
-    <script type="module" defer>
-      import {
-        fetchPost,
-        Highlighter,
-        parseReason,
-        isBlacklistReason,
-        getReasonPositions,
-      } from "./dist/highlight-smokedetector-matches.js";
-      async function loadPost() {
-        const post = await fetchPost(document.getElementById("post-id").value);
-        document.getElementById("post-body").textContent = post?.body;
-        document.getElementById("post-title").textContent = post?.title;
-        document.getElementById("post-username").textContent = post?.username;
-        const reasons = [];
-        if (post?.why) {
-          const highlighters = new Map();
-          highlighters.set("body", new Highlighter(post.body));
-          highlighters.set("title", new Highlighter(post.title));
-          highlighters.set("username", new Highlighter(post.username));
-          for (const why of post.why) {
-            const itemElement = document.createElement("li");
-            const preElement = document.createElement("pre");
-            itemElement.appendChild(preElement);
-            preElement.textContent = why;
-            reasons.push(itemElement);
-
-            const whyMatch = parseReason(why);
-            if (whyMatch && isBlacklistReason(whyMatch)) {
-              preElement.classList += "highlighted";
-              const highlighter = highlighters.get(whyMatch.postField);
-              for (const range of getReasonPositions(whyMatch)) {
-                highlighter.addHighlight(range);
-              }
-            }
-          }
-          for (const [field, highlighter] of highlighters) {
-            document.getElementById("post-" + field).innerHTML =
-              highlighter.getPreText("highlighted");
-          }
-        }
-        document.getElementById("post-why").replaceChildren(...reasons);
-      }
-      document.getElementById("load-button").onclick = loadPost;
-    </script>
+    <script src="dist/tester.js" type="module" defer></script>
   </head>
   <body>
     <h1>highlight-smokedetector-matches Tester</h1>

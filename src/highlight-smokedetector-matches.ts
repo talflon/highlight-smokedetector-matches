@@ -79,6 +79,10 @@ export type WhyMatch = {
   details: string;
 };
 
+export type WhyMatchWithField = WhyMatch & {
+  postField: PostField;
+};
+
 const PARSE_REASON_REGEX = new RegExp(`^(?:${WHY_REASON_REGEX.source})`);
 
 /**
@@ -112,8 +116,10 @@ const BLACKLIST_REASONS = new Set([
   "Blacklisted website",
 ]);
 
-export function isBlacklistReason(whyMatch: WhyMatch): boolean {
-  return BLACKLIST_REASONS.has(whyMatch.reason);
+export function isBlacklistReason(
+  whyMatch: WhyMatch,
+): whyMatch is WhyMatchWithField {
+  return !!whyMatch.postField && BLACKLIST_REASONS.has(whyMatch.reason);
 }
 
 export function getReasonPositions(whyMatch: WhyMatch): IndexRange[] {
