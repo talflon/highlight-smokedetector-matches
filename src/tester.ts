@@ -11,7 +11,10 @@ import {
 async function loadPost() {
   const idElement: HTMLInputElement | null = document.querySelector("#post-id");
   if (!idElement) throw new Error("Couldn't find post-id");
-  const post = await fetchPost(parseInt(idElement.value));
+  const postId = Number(idElement.value);
+  if (!(Number.isSafeInteger(postId) && postId > 0))
+    throw new Error(`Invalid post ID ${idElement.value}`);
+  const post = await fetchPost(postId);
 
   // Set initial values without highlighting; we'll replace later if highlighting succeeds.
   for (const field of POST_FIELDS) {
