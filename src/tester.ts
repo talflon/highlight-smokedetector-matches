@@ -6,7 +6,7 @@ import {
   getReasonPositions,
   type PostField,
   POST_FIELDS,
-} from "./highlight-smokedetector-matches.js";
+} from "./index.js";
 
 async function loadPost() {
   const idElement: HTMLInputElement | null = document.querySelector("#post-id");

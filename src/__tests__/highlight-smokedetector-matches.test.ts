@@ -14,7 +14,7 @@ import {
   splitWhy,
   type IndexRange,
   type PostField,
-} from "../highlight-smokedetector-matches";
+} from "..";
 import fc from "fast-check";
 
 function expectToBeDefined<T>(actual: T | undefined): asserts actual is T {
