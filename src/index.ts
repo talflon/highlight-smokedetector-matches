@@ -50,9 +50,10 @@ const WHY_REASON_REGEX =
 
 // Split on newlines, but only when the next line looks like it's a new SmokeDetector reason,
 // instead of part of a quotation from the post which included newlines.
-const WHY_SPLIT_REGEX = new RegExp(
-  String.raw`\n(?=${WHY_REASON_REGEX.source.replaceAll(/\((?<!\\)(?!\?)/g, "(?:")})`,
-);
+const WHY_SPLIT_REGEX = /* @__PURE__ */ (() =>
+  new RegExp(
+    String.raw`\n(?=${WHY_REASON_REGEX.source.replaceAll(/\((?<!\\)(?!\?)/g, "(?:")})`,
+  ))();
 
 /**
  * Splits the "why" field of a post into an array of individual reasons,
@@ -85,7 +86,8 @@ export type WhyMatchWithField = WhyMatch & {
   postField: PostField;
 };
 
-const PARSE_REASON_REGEX = new RegExp(`^(?:${WHY_REASON_REGEX.source})`);
+const PARSE_REASON_REGEX = /* @__PURE__ */ (() =>
+  new RegExp(`^(?:${WHY_REASON_REGEX.source})`))();
 
 /**
  * Attempts to parse a line of the "why" into a WhyMatch
