@@ -45,6 +45,35 @@ export async function fetchPost(id: number): Promise<Post | undefined> {
   };
 }
 
+export type MetasmokePageNodes = {
+  [K in keyof Post]: HTMLElement;
+};
+
+export function getMetasmokePageNodes(
+  domNode: Document | HTMLElement,
+): MetasmokePageNodes {
+  const title = domNode.querySelector<HTMLElement>(".post-title-bdi");
+  if (!title) throw new Error("Couldn't find title");
+  const body = domNode.querySelector<HTMLElement>(
+    ":scope #post-body-tab > pre",
+  );
+  if (!body) throw new Error("Couldn't find body");
+  const username = domNode.querySelector<HTMLElement>(".post-username-link");
+  if (!username) throw new Error("Couldn't find username");
+  const why = domNode.querySelector<HTMLElement>(".post-why");
+  if (!why) throw new Error("Couldn't find why");
+  return { title, body, username, why };
+}
+
+export function getPostFromMetasmokePage(pageNodes: MetasmokePageNodes): Post {
+  return {
+    title: pageNodes.title.textContent,
+    body: pageNodes.body.textContent,
+    username: pageNodes.username.textContent,
+    why: splitWhy(pageNodes.why.textContent),
+  };
+}
+
 const WHY_REASON_REGEX =
   /(?:([A-Z][a-z]*(?:[ -][a-z]+)*) - )|(?:([BP]o|Bod|Pos)|(Body|Post)(?: -?)?)\.\.\./;
 

@@ -1,10 +1,41 @@
-import { type Post, splitWhy } from ".";
+import {
+  getMetasmokePageNodes,
+  getPostFromMetasmokePage,
+  getReasonPositions,
+  Highlighter,
+  isBlacklistReason,
+  parseReason,
+  POST_FIELDS,
+  type PostField,
+} from ".";
 
-const post: Post = {
-  title: document.querySelector(".post-title-bdi")?.textContent ?? "",
-  body: document.querySelector("#post-body-tab > pre")?.textContent ?? "",
-  username: document.querySelector(".post-username-link")?.textContent ?? "",
-  why: splitWhy(document.querySelector(".post-why")?.textContent ?? ""),
+const pageNodes = getMetasmokePageNodes(document);
+const post = getPostFromMetasmokePage(pageNodes);
+
+const highlighters: Record<PostField, Highlighter> = {
+  body: new Highlighter(post.body),
+  title: new Highlighter(post.title),
+  username: new Highlighter(post.username),
 };
 
-console.log(post);
+for (const why of post.why) {
+  const whyMatch = parseReason(why);
+  if (whyMatch && isBlacklistReason(whyMatch)) {
+    const highlighter = highlighters[whyMatch.postField];
+    for (const range of getReasonPositions(whyMatch)) {
+      highlighter.addHighlight(range);
+    }
+  }
+}
+
+for (const field of POST_FIELDS) {
+  pageNodes[field].innerHTML = highlighters[field].getPreText("highlighted");
+}
+
+const highlightCSS = `<style>
+  .highlighted {
+    background-color: #f80;
+  }
+</style>`;
+
+document.head.insertAdjacentHTML("beforeend", highlightCSS);
