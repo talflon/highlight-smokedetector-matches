@@ -390,37 +390,76 @@ describe("WhyMatch", () => {
     },
   );
 
-  test.each<[string, PostField, IndexRange[]]>([
-    [
-      "Potentially bad keyword in body - Position 1-5: what",
-      "body",
-      [{ start: 1, end: 5 }],
-    ],
+  test.each<[string, PostField, [number, number][]]>([
+    ["Potentially bad keyword in body - Position 1-5: what", "body", [[1, 5]]],
     [
       "Potentially bad keyword in answer - Position 558-572: bademail 12, Position 576-591: G M A I L C O M",
       "body",
       [
-        { start: 558, end: 572 },
-        { start: 576, end: 591 },
+        [558, 572],
+        [576, 591],
       ],
     ],
     [
       "Bad keyword in title - Positions 10-15, 19-23: whatEver",
       "title",
       [
-        { start: 10, end: 15 },
-        { start: 19, end: 23 },
+        [10, 15],
+        [19, 23],
       ],
     ],
     [
       "Potentially bad keyword in username - Position 0-9: sus",
       "username",
-      [{ start: 0, end: 9 }],
+      [[0, 9]],
     ],
     [
       "Blacklisted website in body - Position 12883-12901: evil.site",
       "body",
-      [{ start: 12883, end: 12901 }],
+      [[12883, 12901]],
+    ],
+    ["Potentially bad keyword in body - potentially bad keyword", "body", []],
+    ["Bad keyword in title - Position 2-10: 3-4", "title", [[2, 10]]],
+    ["Potentially bad keyword in username - Simon says 5-8", "username", []],
+    [
+      "Bad keyword in body - Positions 10-15, 19-23: one, Position 50-66: Two, Positions 0-1, 100-101, 200-300: THREE",
+      "body",
+      [
+        [10, 15],
+        [19, 23],
+        [50, 66],
+        [0, 1],
+        [100, 101],
+        [200, 300],
+      ],
+    ],
+    [
+      "Bad keyword in body - Positions 10-15, 19-23, +7 more: one, Position 50-66: Two, Positions 0-1, 100-101, 200-300: THREE",
+      "body",
+      [
+        [10, 15],
+        [19, 23],
+        [50, 66],
+        [0, 1],
+        [100, 101],
+        [200, 300],
+      ],
+    ],
+    [
+      "Bad keyword in body - Positions 10-15, 19-23, +16 more: x",
+      "body",
+      [
+        [10, 15],
+        [19, 23],
+      ],
+    ],
+    [
+      "Potentially bad keyword in title - Positions 0-5, 10-15: Position 6-5: tricked you!",
+      "title",
+      [
+        [0, 5],
+        [10, 15],
+      ],
     ],
   ])(
     "Parsing WhyMatch with positions: %s",
@@ -429,7 +468,13 @@ describe("WhyMatch", () => {
       expectToBeDefined(whyMatch);
       expect(whyMatch.postField).toBe(postField);
       expect(isBlacklistReason(whyMatch)).toBeTruthy();
-      expect(getReasonPositions(whyMatch)).toStrictEqual(expectedPositions);
+      expect(new Set(getReasonPositions(whyMatch))).toStrictEqual(
+        new Set(
+          expectedPositions.map(([start, end]) => {
+            return { start, end };
+          }),
+        ),
+      );
     },
   );
 });

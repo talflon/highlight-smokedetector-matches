@@ -156,9 +156,17 @@ export function isBlacklistReason(
 }
 
 export function getReasonPositions(whyMatch: WhyMatch): IndexRange[] {
-  return Array.from(whyMatch.details.matchAll(/([0-9]+)-([0-9]+)/g), (m) => {
-    return { start: Number(m[1]), end: Number(m[2]) };
-  });
+  const positions: IndexRange[] = [];
+  for (const posListMatch of whyMatch.details.matchAll(
+    /\bPositions? ((?:0|[1-9][0-9]*)-[1-9][0-9]*(?:, (?:0|[1-9][0-9]*)-[1-9][0-9]*)*)(?:, \+[1-9][0-9]* more)?: .[^,]*/g,
+  )) {
+    for (const posMatch of posListMatch[1]!.matchAll(
+      /(0|[1-9][0-9]*)-([1-9][0-9]*)/g,
+    )) {
+      positions.push({ start: Number(posMatch[1]), end: Number(posMatch[2]) });
+    }
+  }
+  return positions;
 }
 
 export class Highlighter {
