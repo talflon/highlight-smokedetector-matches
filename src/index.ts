@@ -74,22 +74,18 @@ export function getPostFromMetasmokePage(pageNodes: MetasmokePageNodes): Post {
   };
 }
 
-const WHY_REASON_REGEX =
-  /(?:([A-Z][a-z]*(?:[ -][a-z]+)*) - )|(?:([BP]o|Bod|Pos)|(Body|Post)(?: -?)?)\.\.\./;
-
-// Split on newlines, but only when the next line looks like it's a new SmokeDetector reason,
-// instead of part of a quotation from the post which included newlines.
-const WHY_SPLIT_REGEX = /* @__PURE__ */ (() =>
-  new RegExp(
-    String.raw`\n(?=${WHY_REASON_REGEX.source.replaceAll(/\((?<!\\)(?!\?)/g, "(?:")})`,
-  ))();
-
 /**
  * Splits the "why" field of a post into an array of individual reasons,
  * since it's a line-deliminated string field.
  */
 export function splitWhy(rawWhy: string): string[] {
-  return rawWhy.split(WHY_SPLIT_REGEX).filter((w) => w.trim()); // remove blank lines
+  return rawWhy
+    .split(
+      // Split on newlines, but only when the next line looks like it's a new SmokeDetector reason,
+      // instead of part of a quotation from the post which included newlines.
+      /\n(?=[A-Z][a-z]*(?:[ -][a-z]+)* - |[BP]o|Bod|Pos|(?:Body|Post)(?: -?)?\.\.\.)/,
+    )
+    .filter((w) => w.trim()); // remove blank lines
 }
 
 export function escapeForPre(html: string): string {
@@ -115,14 +111,15 @@ export type WhyMatchWithField = WhyMatch & {
   postField: PostField;
 };
 
-const PARSE_REASON_REGEX = /* @__PURE__ */ (() =>
-  new RegExp(`^(?:${WHY_REASON_REGEX.source})`))();
-
 /**
  * Attempts to parse a line of the "why" into a WhyMatch
  */
 export function parseReason(whyLine: string): WhyMatch | undefined {
-  const reasonMatch = whyLine.match(PARSE_REASON_REGEX);
+  const reasonMatch = whyLine.match(
+    // Match the reason text plus the punctuation between it and the details,
+    // but capture only the reason text. Can't be done in one capturing group, so use multiple.
+    /^(?:([A-Z][a-z]*(?:[ -][a-z]+)*) - |([BP]o|Bod|Pos)|(Body|Post)(?: -?)?\.\.\.)/,
+  );
   if (!reasonMatch) {
     return undefined;
   }
@@ -158,9 +155,12 @@ export function isBlacklistReason(
 export function getReasonPositions(whyMatch: WhyMatch): IndexRange[] {
   const positions: IndexRange[] = [];
   for (const posListMatch of whyMatch.details.matchAll(
+    // The capturing group will be a comma-separated list of position range pairs
     /\bPositions? ((?:0|[1-9][0-9]*)-[1-9][0-9]*(?:, (?:0|[1-9][0-9]*)-[1-9][0-9]*)*)(?:, \+[1-9][0-9]* more)?: .[^,]*/g,
   )) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     for (const posMatch of posListMatch[1]!.matchAll(
+      // Capture each position
       /(0|[1-9][0-9]*)-([1-9][0-9]*)/g,
     )) {
       positions.push({ start: Number(posMatch[1]), end: Number(posMatch[2]) });
