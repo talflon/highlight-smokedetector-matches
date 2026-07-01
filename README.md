@@ -1,10 +1,25 @@
 # highlight-smokedetector-matches
 
-Small library, and eventually userscript, for highlighting the actual SmokeDetector matches in Metasmoke records.
+Small library and userscript for highlighting the actual SmokeDetector matches in Metasmoke records.
 
 **_Still under construction!_**
 
-## Test webapp
+Currently it will show highlighting of blacklist source code matches on Metasmoke `/posts/<ID>` pages.
+
+[Click here to install or download](https://raw.githubusercontent.com/talflon/highlight-smokedetector-matches/main/highlight-smokedetector-matches.user.js)
+
+## Development
+
+You should be able to rebuild the userscript from its Typescript sources with:
+
+```
+$ npm install
+$ npm run build
+```
+
+### Tester webapp
+
+Included is a small webapp for loading posts directly from the Metasmoke API and displaying them with highlighting. To use it:
 
 1. Add an Metasmoke key to `src/config.ts`
 2. Run `npm run compile`
@@ -13,7 +28,6 @@ Small library, and eventually userscript, for highlighting the actual SmokeDetec
 
 ## Current goals
 
-- Show highlighting of blacklist source code matches on Metasmoke `/posts/<ID>` pages
 - Add some way to see highlighting of blacklist source code matches in FIRE popup
 - Show (best-effort) highlighting in rendered preview on Metasmoke `/posts/<ID>` pages
 - Show (best-effort) highlighting in rendered preview on FIRE popup
