@@ -129,35 +129,40 @@ describe("Highlighter", () => {
       );
     });
 
-    for (const textWithBracketHighlights of [
-      "",
-      "simple nothing highlighted",
-      "with a [single highlight]",
-      "[many] different [highlights here] etc",
-      "with a <faketag></faketag>",
-      "with [a <faketag></faketag>]",
-      "with a <faketag>[</faketag>]",
+    for (const textSeparatedByHighlights of [
+      [""],
+      ["simple nothing highlighted"],
+      ["with a ", "single highlight"],
+      ["", "many", " different ", "highlights here", " etc"],
+      ["with a <faketag></faketag>"],
+      ["with ", "a <faketag></faketag>"],
+      ["with a <faketag>", "</faketag>"],
     ]) {
-      const rawText = textWithBracketHighlights.replaceAll(/[[\]]/g, " ");
+      const rawText = textSeparatedByHighlights.join("");
       const highlighter = new Highlighter(rawText);
-      for (const match of textWithBracketHighlights.matchAll(/\[[^[\]]+\]/g)) {
-        highlighter.addHighlight({
-          start: match.index,
-          end: match.index + match[0].length,
-        });
+      let position = 0;
+      let shouldHighlight = false;
+      for (const chunk of textSeparatedByHighlights) {
+        if (shouldHighlight) {
+          highlighter.addHighlight({
+            start: position,
+            end: position + chunk.length,
+          });
+        }
+        position += chunk.length;
+        shouldHighlight = !shouldHighlight;
       }
       const preNode = document.createElement("pre");
       const className = "any";
       preNode.innerHTML = highlighter.getPreText(className);
 
-      test(`passes through to textContent: ${textWithBracketHighlights}`, () => {
+      test(`passes through to textContent: ${JSON.stringify(textSeparatedByHighlights)}`, () => {
         expect(cleanWords(preNode.textContent)).toBe(cleanWords(rawText));
       });
 
-      test(`spans contain proper text and class: ${textWithBracketHighlights}`, () => {
-        const highlightedText = Array.from(
-          textWithBracketHighlights.matchAll(/\[([^[\]]+)\]/g),
-          (m) => m[1]!,
+      test(`spans contain proper text and class: ${JSON.stringify(textSeparatedByHighlights)}`, () => {
+        const highlightedText = textSeparatedByHighlights.filter(
+          (_value, index) => index % 2,
         );
         const highlightedTextContent = Array.from(
           preNode.querySelectorAll(`span.${className}`),
