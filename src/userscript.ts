@@ -9,27 +9,47 @@ import {
   type PostField,
 } from ".";
 
-const pageNodes = getMetasmokePageNodes(document);
-const post = getPostFromMetasmokePage(pageNodes);
+/**
+ * Reads the post from the Metasmoke page,
+ * and adds highlights to the body, title, and username.
+ * Won't run a second time if the highlights have already been added.
+ */
+function addHighlights() {
+  const pageNodes = getMetasmokePageNodes(document);
+  if (pageNodes.body.dataset.highlightsAdded) {
+    return;
+  }
+  const post = getPostFromMetasmokePage(pageNodes);
 
-const highlighters: Record<PostField, Highlighter> = {
-  body: new Highlighter(post.body),
-  title: new Highlighter(post.title),
-  username: new Highlighter(post.username),
-};
+  const highlighters: Record<PostField, Highlighter> = {
+    body: new Highlighter(post.body),
+    title: new Highlighter(post.title),
+    username: new Highlighter(post.username),
+  };
 
-for (const why of post.why) {
-  const whyMatch = parseReason(why);
-  if (whyMatch && isBlacklistReason(whyMatch)) {
-    const highlighter = highlighters[whyMatch.postField];
-    for (const range of getReasonPositions(whyMatch)) {
-      highlighter.addHighlight(range);
+  for (const why of post.why) {
+    const whyMatch = parseReason(why);
+    if (whyMatch && isBlacklistReason(whyMatch)) {
+      const highlighter = highlighters[whyMatch.postField];
+      for (const range of getReasonPositions(whyMatch)) {
+        highlighter.addHighlight(range);
+      }
     }
+  }
+
+  for (const field of POST_FIELDS) {
+    const node = pageNodes[field];
+    node.innerHTML = highlighters[field].getPreText("highlighted");
+    node.dataset.highlightsAdded = "true";
   }
 }
 
-for (const field of POST_FIELDS) {
-  pageNodes[field].innerHTML = highlighters[field].getPreText("highlighted");
+addEventListener("load", addHighlights);
+// Metasmoke uses Turbolinks, so we must register for its page loads
+addEventListener("turbolinks:load", addHighlights);
+if (document.readyState !== "loading") {
+  // In case we missed the first events
+  addHighlights();
 }
 
 const highlightCSS = `<style>
