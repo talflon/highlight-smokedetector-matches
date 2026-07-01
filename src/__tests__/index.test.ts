@@ -137,19 +137,22 @@ describe("Highlighter", () => {
       ["with a <faketag></faketag>"],
       ["with ", "a <faketag></faketag>"],
       ["with a <faketag>", "</faketag>"],
+      ["with non-UTF16 chars 𝟲𝟰 ", "highlight"],
+      ["with non-UTF16 chars ", "high𝟲𝟰light", ", etc"],
     ]) {
       const rawText = textSeparatedByHighlights.join("");
       const highlighter = new Highlighter(rawText);
       let position = 0;
       let shouldHighlight = false;
       for (const chunk of textSeparatedByHighlights) {
+        const chunkLength = [...chunk].length;
         if (shouldHighlight) {
           highlighter.addHighlight({
             start: position,
-            end: position + chunk.length,
+            end: position + chunkLength,
           });
         }
-        position += chunk.length;
+        position += chunkLength;
         shouldHighlight = !shouldHighlight;
       }
       const preNode = document.createElement("pre");

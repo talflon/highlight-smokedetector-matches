@@ -172,11 +172,14 @@ export function getReasonPositions(whyMatch: WhyMatch): IndexRange[] {
 export class Highlighter {
   /** The raw text */
   text: string;
+  /** The number of characters in text (which might be less than its UTF16 length) */
+  charLength: number;
   /** Sorted list of non-overlapping ranges that are highlighted */
   highlights: IndexRange[];
 
   constructor(text: string) {
     this.text = text;
+    this.charLength = [...text].length;
     this.highlights = [];
   }
 
@@ -194,12 +197,12 @@ export class Highlighter {
       throw new RangeError(
         `Invalid range ${highlight.start}, ${highlight.end}`,
       );
-    if (highlight.end > this.text.length) {
+    if (highlight.end > this.charLength) {
       console.warn(
-        `Highlight range out of bounds: ${highlight.start}, ${highlight.end} for ${this.text.length} chars`,
+        `Highlight range out of bounds: ${highlight.start}, ${highlight.end} for ${this.charLength} chars`,
       );
-      if (highlight.start >= this.text.length) return;
-      highlight = { start: highlight.start, end: this.text.length };
+      if (highlight.start >= this.charLength) return;
+      highlight = { start: highlight.start, end: this.charLength };
     }
     if (highlight.end == highlight.start) return;
 
@@ -269,14 +272,17 @@ export class Highlighter {
   getPreText(spanClass: string): string {
     let result = "";
     let pos = 0;
+    const chars = [...this.text];
     for (const highlight of this.highlights) {
-      result += escapeForPre(this.text.slice(pos, highlight.start));
+      result += escapeForPre(chars.slice(pos, highlight.start).join(""));
       result += `<span class="${spanClass}">`;
-      result += escapeForPre(this.text.slice(highlight.start, highlight.end));
+      result += escapeForPre(
+        chars.slice(highlight.start, highlight.end).join(""),
+      );
       result += "</span>";
       pos = highlight.end;
     }
-    result += escapeForPre(this.text.slice(pos));
+    result += escapeForPre(chars.slice(pos).join(""));
     return result;
   }
 }
