@@ -17,6 +17,9 @@ $ npm install
 $ npm run build
 ```
 
+If instead you run `npm run build dev`, it will create a `.dev.user.js` userscript
+which does extra logging and display for debugging purposes.
+
 ### Tester webapp
 
 Included is a small webapp for loading posts directly from the Metasmoke API and displaying them with highlighting. To use it:

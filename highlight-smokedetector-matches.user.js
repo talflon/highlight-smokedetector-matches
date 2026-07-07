@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name highlight-smokedetector-matches
-// @version 0.1
+// @version 0.1.1
 // @author Daniel Getz
 // @description Highlights the actual SmokeDetector matches in Metasmoke records
 // @namespace https://getzit.net
