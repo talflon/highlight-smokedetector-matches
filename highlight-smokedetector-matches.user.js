@@ -6,7 +6,8 @@
 // @namespace https://getzit.net
 // @downloadURL https://raw.githubusercontent.com/talflon/highlight-smokedetector-matches/main/highlight-smokedetector-matches.user.js
 // @supportURL  https://github.com/talflon/highlight-smokedetector-matches/issues
-// @match *://metasmoke.erwaysoftware.com/post/*
+// @match *://metasmoke.erwaysoftware.com/*
+// @match *://m.erwaysoftware.com/*
 // @noframes
 // ==/UserScript==
 "use strict";
@@ -177,6 +178,9 @@
 
   // src/userscript.ts
   function addHighlights() {
+    if (!location.pathname.startsWith("/post/")) {
+      return;
+    }
     const pageNodes = getMetasmokePageNodes(document);
     if (pageNodes.body.dataset.highlightsAdded) {
       return;

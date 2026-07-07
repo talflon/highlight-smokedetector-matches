@@ -16,6 +16,12 @@ import {
  * Won't run a second time if the highlights have already been added.
  */
 function addHighlights() {
+  if (!location.pathname.startsWith("/post/")) {
+    DEV: console.log(
+      `not adding highlights; not a post path: ${location.pathname}`,
+    );
+    return;
+  }
   DEV: setDebugColor("green", "start addHighlights()");
   const pageNodes = getMetasmokePageNodes(document);
   if (pageNodes.body.dataset.highlightsAdded) {
