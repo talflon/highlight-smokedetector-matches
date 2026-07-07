@@ -1,3 +1,5 @@
+// @ts-check
+
 import { build } from "esbuild";
 import packageInfo from "./package.json" with { type: "json" };
 import tsConfig from "./tsconfig.json" with { type: "json" };
@@ -14,10 +16,18 @@ const userscriptHeader = `// ==UserScript==
 // @noframes
 // ==/UserScript==`;
 
-await build({
+const buildConfig = {
   entryPoints: ["src/userscript.ts"],
   bundle: true,
   banner: { js: userscriptHeader },
   outfile: "highlight-smokedetector-matches.user.js",
-  target: tsConfig.target,
-});
+  target: tsConfig.compilerOptions.target,
+  dropLabels: ["DEV"],
+};
+
+if (process.argv.includes("dev", 2)) {
+  buildConfig.outfile = "highlight-smokedetector-matches.dev.user.js";
+  buildConfig.dropLabels = [];
+}
+
+await build(buildConfig);

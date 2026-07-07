@@ -15,6 +15,7 @@ export default defineConfig({
     unicorn.configs.recommended,
   ],
   rules: {
+    "no-undef": "off",
     "@typescript-eslint/consistent-type-definitions": "off",
     "@typescript-eslint/no-non-null-assertion": "warn",
     "unicorn/name-replacements": "warn",

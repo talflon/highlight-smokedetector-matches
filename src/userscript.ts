@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-labels */
 import {
   getMetasmokePageNodes,
   getPostFromMetasmokePage,
@@ -15,8 +16,10 @@ import {
  * Won't run a second time if the highlights have already been added.
  */
 function addHighlights() {
+  DEV: setDebugColor("green", "start addHighlights()");
   const pageNodes = getMetasmokePageNodes(document);
   if (pageNodes.body.dataset.highlightsAdded) {
+    DEV: setDebugColor("blue", "already there, no need to run again");
     return;
   }
   const post = getPostFromMetasmokePage(pageNodes);
@@ -42,7 +45,15 @@ function addHighlights() {
     node.innerHTML = highlighters[field].getPreText("highlighted");
     node.dataset.highlightsAdded = "true";
   }
+  DEV: setDebugColor("orange", "finished addHighlights()");
 }
+
+function setDebugColor(color: string, message?: unknown) {
+  if (message) console.log(message);
+  document.body.style.border = `thick solid ${color}`;
+}
+
+DEV: setDebugColor("black", "userscript starting");
 
 addEventListener("load", addHighlights);
 // Metasmoke uses Turbolinks, so we must register for its page loads
