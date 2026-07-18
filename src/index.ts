@@ -285,4 +285,24 @@ export class Highlighter {
     result += escapeForPre(chars.slice(pos).join(""));
     return result;
   }
+
+  /**
+   * Replaces the children of an element with the text highlighted with <span>s
+   * @param spanClass the class attribute for the highlighted <span>s
+   */
+  setToHighlightedText(element: Element, spanClass: string) {
+    let pos = 0;
+    const chars = [...this.text];
+    element.replaceChildren();
+    for (const highlight of this.highlights) {
+      const spanElement = document.createElement("span");
+      spanElement.className = spanClass;
+      spanElement.textContent = chars
+        .slice(highlight.start, highlight.end)
+        .join("");
+      element.append(chars.slice(pos, highlight.start).join(""), spanElement);
+      pos = highlight.end;
+    }
+    element.append(chars.slice(pos).join(""));
+  }
 }

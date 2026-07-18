@@ -21,6 +21,25 @@ function expectToBeDefined<T>(actual: T | undefined): asserts actual is T {
   expect(actual).toBeDefined();
 }
 
+function expectToBeInstanceOf<T>(
+  actual: unknown,
+  cls: new (...arguments_: never[]) => T,
+): asserts actual is T {
+  expect(actual).toBeInstanceOf(cls);
+}
+
+function expectArray<T>(
+  received: { length: number; [index: number]: T },
+  expectations: ((value: T) => void)[],
+) {
+  expect(received.length).toBe(expectations.length);
+  for (const [index, expectation] of expectations.entries()) {
+    const receivedValue = received[index];
+    expectToBeDefined(receivedValue);
+    expectation(receivedValue);
+  }
+}
+
 test.each([
   [[]],
   [["Something something - blah"]],
@@ -193,6 +212,116 @@ describe("Highlighter", () => {
             const preNode = document.createElement("pre");
             preNode.innerHTML = highlighter.getPreText("testing");
             expect(preNode.textContent.replaceAll(/\s+/g, "")).toBe(
+              text.replaceAll(/\s+/g, ""),
+            );
+          },
+        ),
+      );
+    });
+  });
+
+  describe("setToHighlightedText", () => {
+    test("without highlights, should be the same as original text", () => {
+      fc.assert(
+        fc.property(fc.string(), fc.string(), (text, spanClass) => {
+          const preElement = document.createElement("pre");
+          new Highlighter(text).setToHighlightedText(preElement, spanClass);
+          expect(preElement.textContent).toBe(text);
+        }),
+      );
+    });
+
+    test.each([
+      ["words words", "highlight the words words in this"],
+      ["words < words", "highlight < the words < words in < this"],
+    ])("one highlight: %p in %p", (toHighlight, text) => {
+      const className = "any";
+      const highlighter = new Highlighter(text);
+      const start = text.indexOf(toHighlight);
+      highlighter.addHighlight({ start, end: start + toHighlight.length });
+      const preElement = document.createElement("pre");
+      highlighter.setToHighlightedText(preElement, className);
+      expectArray(preElement.childNodes, [
+        (node) => {
+          expectToBeInstanceOf(node, Text);
+          expect(node.textContent).toBe(text.slice(0, start));
+        },
+        (node) => {
+          expectToBeInstanceOf(node, HTMLSpanElement);
+          expect(node.textContent).toBe(toHighlight);
+          expect(node.classList).toContain(className);
+        },
+        (node) => {
+          expectToBeInstanceOf(node, Text);
+          expect(node.textContent).toBe(text.slice(start + toHighlight.length));
+        },
+      ]);
+    });
+
+    for (const textSeparatedByHighlights of [
+      [""],
+      ["simple nothing highlighted"],
+      ["with a ", "single highlight"],
+      ["", "many", " different ", "highlights here", " etc"],
+      ["with a <faketag></faketag>"],
+      ["with ", "a <faketag></faketag>"],
+      ["with a <faketag>", "</faketag>"],
+      ["with non-UTF16 chars 𝟲𝟰 ", "highlight"],
+      ["with non-UTF16 chars ", "high𝟲𝟰light", ", etc"],
+    ]) {
+      const rawText = textSeparatedByHighlights.join("");
+      const highlighter = new Highlighter(rawText);
+      let position = 0;
+      let shouldHighlight = false;
+      for (const chunk of textSeparatedByHighlights) {
+        const chunkLength = [...chunk].length;
+        if (shouldHighlight) {
+          highlighter.addHighlight({
+            start: position,
+            end: position + chunkLength,
+          });
+        }
+        position += chunkLength;
+        shouldHighlight = !shouldHighlight;
+      }
+      const preElement = document.createElement("pre");
+      const className = "any";
+      highlighter.setToHighlightedText(preElement, className);
+
+      test(`passes through to textContent: ${JSON.stringify(textSeparatedByHighlights)}`, () => {
+        expect(cleanWords(preElement.textContent)).toBe(cleanWords(rawText));
+      });
+
+      test(`spans contain proper text and class: ${JSON.stringify(textSeparatedByHighlights)}`, () => {
+        const highlightedText = textSeparatedByHighlights.filter(
+          (_value, index) => index % 2,
+        );
+        const highlightedTextContent = Array.from(
+          preElement.querySelectorAll(`span.${className}`),
+          (span) => span.textContent,
+        );
+        expect(
+          highlightedTextContent.map((text) => cleanWords(text)),
+        ).toStrictEqual(highlightedText.map((text) => cleanWords(text)));
+      });
+    }
+
+    test("textContent matches text down to whitespace differences", () => {
+      fc.assert(
+        fc.property(
+          fc
+            .string({ minLength: 1 })
+            .chain((text) =>
+              fc.tuple(fc.constant(text), fc.array(arbRange(text.length))),
+            ),
+          ([text, highlights]) => {
+            const highlighter = new Highlighter(text);
+            for (const h of highlights) {
+              highlighter.addHighlight(h);
+            }
+            const preElement = document.createElement("pre");
+            highlighter.setToHighlightedText(preElement, "testing");
+            expect(preElement.textContent.replaceAll(/\s+/g, "")).toBe(
               text.replaceAll(/\s+/g, ""),
             );
           },
