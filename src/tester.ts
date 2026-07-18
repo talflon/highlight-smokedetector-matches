@@ -48,7 +48,7 @@ async function loadPost() {
     }
     for (const field of POST_FIELDS) {
       for (const fieldElement of document.querySelectorAll(`#post-${field}`)) {
-        fieldElement.innerHTML = highlighters[field].getPreText("highlighted");
+        highlighters[field].setToHighlightedText(fieldElement, "highlighted");
       }
     }
   }

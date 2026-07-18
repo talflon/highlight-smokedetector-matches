@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name highlight-smokedetector-matches
-// @version 0.1.1
+// @version 0.1.2
 // @author Daniel Getz
 // @description Highlights the actual SmokeDetector matches in Metasmoke records
 // @namespace https://getzit.net
@@ -40,9 +40,6 @@
       // instead of part of a quotation from the post which included newlines.
       /\n(?=[A-Z][a-z]*(?:[ -][a-z]+)* - |[BP]o|Bod|Pos|(?:Body|Post)(?: -?)?\.\.\.)/
     ).filter((w) => w.trim());
-  }
-  function escapeForPre(html) {
-    return html.replaceAll("&", "&amp;").replaceAll("<", "&lt;");
   }
   var POST_FIELDS = ["body", "title", "username"];
   function parseReason(whyLine) {
@@ -154,25 +151,21 @@
       return false;
     }
     /**
-     * Prepares the text for inserting in a <pre>, highlighted with <span>s
+     * Replaces the children of an element with the text highlighted with <span>s
      * @param spanClass the class attribute for the highlighted <span>s
-     * @returns the HTML text
      */
-    getPreText(spanClass) {
-      let result = "";
+    setToHighlightedText(element, spanClass) {
       let pos = 0;
       const chars = [...this.text];
+      element.replaceChildren();
       for (const highlight of this.highlights) {
-        result += escapeForPre(chars.slice(pos, highlight.start).join(""));
-        result += `<span class="${spanClass}">`;
-        result += escapeForPre(
-          chars.slice(highlight.start, highlight.end).join("")
-        );
-        result += "</span>";
+        const spanElement = document.createElement("span");
+        spanElement.className = spanClass;
+        spanElement.textContent = chars.slice(highlight.start, highlight.end).join("");
+        element.append(chars.slice(pos, highlight.start).join(""), spanElement);
         pos = highlight.end;
       }
-      result += escapeForPre(chars.slice(pos).join(""));
-      return result;
+      element.append(chars.slice(pos).join(""));
     }
   };
 
@@ -202,7 +195,7 @@
     }
     for (const field of POST_FIELDS) {
       const node = pageNodes[field];
-      node.innerHTML = highlighters[field].getPreText("highlighted");
+      highlighters[field].setToHighlightedText(node, "highlighted");
       node.dataset.highlightsAdded = "true";
     }
   }

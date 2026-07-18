@@ -6,7 +6,6 @@
 
 import { jest, test, expect, describe } from "@jest/globals";
 import {
-  escapeForPre,
   getReasonPositions,
   Highlighter,
   isBlacklistReason,
@@ -115,111 +114,6 @@ function ignoreRangeWarnings() {
 }
 
 describe("Highlighter", () => {
-  describe("getPreText", () => {
-    test("without highlights, should be the same as escapeForPre", () => {
-      fc.assert(
-        fc.property(fc.string(), fc.string(), (text, spanClass) => {
-          expect(new Highlighter(text).getPreText(spanClass)).toBe(
-            escapeForPre(text),
-          );
-        }),
-      );
-    });
-
-    test("single span added", () => {
-      const text = "highlight the words words in this";
-      const toHighlight = "words words";
-      const highlighter = new Highlighter(text);
-      const start = text.indexOf(toHighlight);
-      highlighter.addHighlight({ start, end: start + toHighlight.length });
-      expect(highlighter.getPreText("hi")).toBe(
-        'highlight the <span class="hi">words words</span> in this',
-      );
-    });
-
-    test("single span added and < escaped", () => {
-      const text = "highlight < the words < words in < this";
-      const toHighlight = "words < words";
-      const highlighter = new Highlighter(text);
-      const start = text.indexOf(toHighlight);
-      highlighter.addHighlight({ start, end: start + toHighlight.length });
-      expect(highlighter.getPreText("hi")).toBe(
-        'highlight &lt; the <span class="hi">words &lt; words</span> in &lt; this',
-      );
-    });
-
-    for (const textSeparatedByHighlights of [
-      [""],
-      ["simple nothing highlighted"],
-      ["with a ", "single highlight"],
-      ["", "many", " different ", "highlights here", " etc"],
-      ["with a <faketag></faketag>"],
-      ["with ", "a <faketag></faketag>"],
-      ["with a <faketag>", "</faketag>"],
-      ["with non-UTF16 chars 𝟲𝟰 ", "highlight"],
-      ["with non-UTF16 chars ", "high𝟲𝟰light", ", etc"],
-    ]) {
-      const rawText = textSeparatedByHighlights.join("");
-      const highlighter = new Highlighter(rawText);
-      let position = 0;
-      let shouldHighlight = false;
-      for (const chunk of textSeparatedByHighlights) {
-        const chunkLength = [...chunk].length;
-        if (shouldHighlight) {
-          highlighter.addHighlight({
-            start: position,
-            end: position + chunkLength,
-          });
-        }
-        position += chunkLength;
-        shouldHighlight = !shouldHighlight;
-      }
-      const preNode = document.createElement("pre");
-      const className = "any";
-      preNode.innerHTML = highlighter.getPreText(className);
-
-      test(`passes through to textContent: ${JSON.stringify(textSeparatedByHighlights)}`, () => {
-        expect(cleanWords(preNode.textContent)).toBe(cleanWords(rawText));
-      });
-
-      test(`spans contain proper text and class: ${JSON.stringify(textSeparatedByHighlights)}`, () => {
-        const highlightedText = textSeparatedByHighlights.filter(
-          (_value, index) => index % 2,
-        );
-        const highlightedTextContent = Array.from(
-          preNode.querySelectorAll(`span.${className}`),
-          (span) => span.textContent,
-        );
-        expect(
-          highlightedTextContent.map((text) => cleanWords(text)),
-        ).toStrictEqual(highlightedText.map((text) => cleanWords(text)));
-      });
-    }
-
-    test("textContent matches text down to whitespace differences", () => {
-      fc.assert(
-        fc.property(
-          fc
-            .string({ minLength: 1 })
-            .chain((text) =>
-              fc.tuple(fc.constant(text), fc.array(arbRange(text.length))),
-            ),
-          ([text, highlights]) => {
-            const highlighter = new Highlighter(text);
-            for (const h of highlights) {
-              highlighter.addHighlight(h);
-            }
-            const preNode = document.createElement("pre");
-            preNode.innerHTML = highlighter.getPreText("testing");
-            expect(preNode.textContent.replaceAll(/\s+/g, "")).toBe(
-              text.replaceAll(/\s+/g, ""),
-            );
-          },
-        ),
-      );
-    });
-  });
-
   describe("setToHighlightedText", () => {
     test("without highlights, should be the same as original text", () => {
       fc.assert(

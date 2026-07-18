@@ -48,7 +48,7 @@ function addHighlights() {
 
   for (const field of POST_FIELDS) {
     const node = pageNodes[field];
-    node.innerHTML = highlighters[field].getPreText("highlighted");
+    highlighters[field].setToHighlightedText(node, "highlighted");
     node.dataset.highlightsAdded = "true";
   }
   DEV: setDebugColor("orange", "finished addHighlights()");

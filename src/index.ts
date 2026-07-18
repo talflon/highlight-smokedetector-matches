@@ -88,10 +88,6 @@ export function splitWhy(rawWhy: string): string[] {
     .filter((w) => w.trim()); // remove blank lines
 }
 
-export function escapeForPre(html: string): string {
-  return html.replaceAll("&", "&amp;").replaceAll("<", "&lt;");
-}
-
 export type IndexRange = {
   start: number;
   end: number;
@@ -262,28 +258,6 @@ export class Highlighter {
       }
     }
     return false;
-  }
-
-  /**
-   * Prepares the text for inserting in a <pre>, highlighted with <span>s
-   * @param spanClass the class attribute for the highlighted <span>s
-   * @returns the HTML text
-   */
-  getPreText(spanClass: string): string {
-    let result = "";
-    let pos = 0;
-    const chars = [...this.text];
-    for (const highlight of this.highlights) {
-      result += escapeForPre(chars.slice(pos, highlight.start).join(""));
-      result += `<span class="${spanClass}">`;
-      result += escapeForPre(
-        chars.slice(highlight.start, highlight.end).join(""),
-      );
-      result += "</span>";
-      pos = highlight.end;
-    }
-    result += escapeForPre(chars.slice(pos).join(""));
-    return result;
   }
 
   /**
